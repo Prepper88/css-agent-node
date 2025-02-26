@@ -57,6 +57,10 @@ export default {
 
         const user = await response.json()
         console.log('Login successful:', user)
+        
+        // Save login state
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('user', JSON.stringify(user));
 
         this.$router.push({ path: '/chat', query: { agentId: user.id } })
       } catch (error) {
