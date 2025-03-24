@@ -1,146 +1,150 @@
+
 <template>
-  <div class="main-container">
-    <!-- Top Section: Agent Information -->
-    <div class="agent-info">
-      <div class="agent-details">
-        <span class="agent-name">{{ agentName }}</span>
-        <span class="agent-id">ID: {{ agentId }}</span>
+  <div class="agent-chat-wrapper">
+    <!-- Left Sidebar: Conversations -->
+    <div class="sidebar">
+      <!-- <div class="sidebar-header">Conversations</div> -->
+      <ul class="conversation-list">
+        <li v-for="(item, index) in conversations" :key="index" @click="selectConversation(item)">
+          <div class="conversation-item">{{ item.summary }}</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Middle Panel: Chat -->
+    <div class="chat-main">
+      <!-- <div class="chat-header">
+        <span v-if="selectedConversation">Session with {{ selectedConversation.summary }}</span>
+        <span v-else>No session selected</span>
+      </div> -->
+
+      <div class="chat-messages">
+        <div
+          v-for="(msg, index) in selectedConversation ? selectedConversation.messages : []"
+          :key="index"
+          :class="['message', msg.senderType === 'agent' ? 'agent' : msg.senderType === 'customer' ? 'customer':msg.senderType === 'robot' ? 'robot' : 'system']"
+        >
+          <span>{{ msg.message }}</span>
+        </div>
       </div>
-      <div class="agent-status">
-        <el-select v-model="agentStatus" placeholder="Select status" @change="updateStatus">
-          <el-option label="Available" value="available" />
-          <el-option label="Busy" value="busy" />
-          <el-option label="Offline" value="offline" />
-        </el-select>
+
+      <div class="chat-input">
+        <input v-model="newMessage" placeholder="Type a message..." @keyup.enter="sendMessage" />
+        <button @click="sendMessage">Send</button>
       </div>
     </div>
 
-    <!-- Bottom Section: Three Columns -->
-    <div class="bottom-container">
-      <!-- Left Column: Session Switcher -->
-      <div class="session-switcher">
-        <el-tabs v-model="activeTab" type="card" @tab-remove="removeTab">
-          <el-tab-pane
-            v-for="tab in tabs"
-            :key="tab.sessionId"
-            :label="`Customer ${tab.customerId}`"
-            :name="tab.sessionId"
-            closable
-          />
-        </el-tabs>
+    <!-- Right Panel: Ticket & Order -->
+    <div class="ticket-panel">
+      <div class="ticket-header">
+        <span>{{ agent.username }}</span>
+        <select v-model="agent.status" @change="updateStatus" class="status-dropdown">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="offline">Offline</option>
+        </select>
       </div>
 
-      <!-- Middle Column: Chat Area -->
-      <div class="chat-area">
-        <div class="chat-window">
-          <div v-for="(msg, index) in activeTabMessages" :key="index" class="message" :class="msg.sender">
-            <div class="message-content">
-              <pre>{{ msg.content }}</pre>
-            </div>
-            <div class="message-time">
-              {{ msg.time }}
-            </div>
-          </div>
-        </div>
-        <div class="input-area">
-          <el-input
-            v-model="inputMessage"
-            placeholder="Type a message"
-            @keydown.enter="handleKeydown"
-            type="textarea"
-            :autosize="{ minRows: 4, maxRows: 15 }"
-            resize="none"
-            class="chat-input"
-          />
-          <el-button type="primary" class="send-button" @click="sendMessage">
-            <el-icon><ArrowUp /></el-icon>
-          </el-button>
-        </div>
-      </div>
-
-      <!-- Right Column: Complaint Area -->
-      <div class="complaint-area">
-        <h3>Complaint Details</h3>
-        <div class="complaint-list">
-          <div v-for="(complaint, index) in complaints" :key="index" class="complaint-item">
-            <div class="complaint-content">
-              {{ complaint.content }}
-            </div>
-            <div class="complaint-time">
-              {{ complaint.time }}
-            </div>
-          </div>
-        </div>
+      <div class="ticket-body">
+        <!-- Reserved for ticket editing & order details -->
+        <p style="color:#888; text-align:center; margin-top: 32px;">Ticket panel under construction</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ArrowUp } from '@element-plus/icons-vue';
-import io from 'socket.io-client';
+import { io } from 'socket.io-client'
+import axios from 'axios'
 
 export default {
-  props: {
-    agentId: {
-      type: Number,
-      required: true, // agentId is a required prop
-    },
-  },
+  name: "AgentChat",
   data() {
     return {
-      agentName: 'John Doe', // Agent's name
-      agentStatus: 'available', // Agent's status
-      activeTab: '', // Currently active tab
-      tabs: [], // List of tabs (each representing a session)
-      inputMessage: '', // Current input message
-      socket: null, // Socket instance
-      complaints: [], // List of complaints
+      agent: {},
+      newMessage: "",
+      selectedConversation: null,
+      conversations: [],
     };
   },
-  computed: {
-    // Get messages for the active tab
-    activeTabMessages() {
-      const activeTab = this.tabs.find((tab) => tab.sessionId === this.activeTab);
-      return activeTab ? activeTab.messages : [];
-    },
-  },
   mounted() {
-    this.initializeSocket();
+    this.initializeAgent()
+    this.initializeSocket()
   },
+  /*
+  created() {
+    if (this.conversations.length > 0) {
+      this.selectedConversation = this.conversations[0];
+    }
+  },*/
   methods: {
-    // Initialize socket and listen for new sessions
+    initializeAgent() {
+      const currentAgent = JSON.parse(localStorage.getItem('agent'))
+      console.log('load agent: {}', currentAgent)
+      this.agent = currentAgent
+    },
     initializeSocket() {
       // Connect to the Socket.IO server
       this.socket = io('http://localhost:3001'); // Replace with your server URL
 
       // Send agent-inbound event with agentId
-      this.socket.emit('agent-inbound', this.agentId );
+      this.socket.emit('agent-inbound', this.agent.id );
 
       // Listen for new sessions assigned to the agent
-      this.socket.on('session-assigned', (data) => {
-        console.log('session assigned, sessionId: ' + data.sessionId);
+      this.socket.on('session-loaded', (sessions) => {
+        console.log('session loaded, session: ' + sessions);
         
-        const { sessionId, customerId } = data;
+        for (let session of sessions) {
+          const { sessionId, customerId, customerName, status, messages } = session;
+
+          // Add a new tab for the session
+          this.conversations.push({
+            sessionId,
+            customerId,
+            summary: customerName,
+            messages: messages,
+            status: status
+          });
+        }
+        // Set the new tab as active
+        if (!this.selectedConversation && this.conversations.length != 0) {
+          this.selectedConversation = this.conversations[0]
+        }
+      });
+
+      // Listen for new sessions assigned to the agent
+      this.socket.on('new-session', (data) => {
+        console.log('new session, sessionId: ' + data.sessionId);
+        
+        const { sessionId, customerId, customerName, status, messages } = data;
         // Add a new tab for the session
-        this.tabs.push({
+        this.conversations.push({
           sessionId,
           customerId,
-          messages: [],
+          summary: customerName,
+          messages: messages,
+          status: status
         });
         // Set the new tab as active
-        this.activeTab = sessionId;
+        if (this.selectedConversation === undefined) {
+          this.selectedConversation = this.conversations[0]
+        }
       });
+
+      //agent status updated
+      this.socket.on('agent-status-updated', (agentStatus)=>{
+        this.agent.status = agentStatus
+      })
 
       // Listen for incoming messages
       this.socket.on('message', (data) => {
         const { sessionId, message, sendName } = data;
         console.log('receive message: ' + message + ' sessionId: ' + sessionId + ' sendName:' + sendName)
 
-        const tab = this.tabs.find((tab) => tab.sessionId === sessionId);
-        if (tab) {
+        const conversation = this.conversations.find((conversation) => conversation.sessionId === sessionId);
+        if (conversation) {
           // Add the message to the tab's chat
-          tab.messages.push({
+          conversation.messages.push({
             content: message,
             sendName,
             time: new Date().toLocaleTimeString(),
@@ -161,210 +165,185 @@ export default {
         });
       });
     },
-    // Send message
+    selectConversation(item) {
+      this.selectedConversation = item;
+    },
     sendMessage() {
-      if (this.inputMessage.trim() === '') return;
-      // Find the active tab
-      const activeTab = this.tabs.find((tab) => tab.sessionId === this.activeTab);
-      if (activeTab) {
-        // Send message through Socket.IO
-        this.socket.emit('send-message', {
-          sessionId: activeTab.sessionId,
-          message: this.inputMessage,
-          agentId: this.agentId,
+      if (!this.newMessage.trim() || !this.selectedConversation) return;
+      this.selectedConversation.messages.push({
+        senderType: "agent",
+        message: this.newMessage,
+      });
+      this.newMessage = "";
+    },
+    async updateStatus() {
+      try {
+        const response = await fetch("http://localhost:8080/api/agent/update-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agentId: this.agent.id,
+            status: this.agent.status,
+          }),
         });
-        // Add the message to the active tab's chat
-        activeTab.messages.push({
-          content: this.inputMessage,
-          sender: 'agent',
-          time: new Date().toLocaleTimeString(),
-        });
-        this.inputMessage = '';
-        // Scroll to the bottom
-        this.$nextTick(() => {
-          const chatWindow = this.$el.querySelector('.chat-window');
-          if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
-        });
+        if (!response.ok) throw new Error("Failed to update status");
+        console.log("Status updated to", this.agent.status);
+      } catch (err) {
+        alert("Failed to update agent status");
       }
     },
-    // Handle keyboard events
-    handleKeydown(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Prevent default line break behavior
-        this.sendMessage();
-      }
-      // Allow line break with Shift + Enter
-    },
-    // Remove a tab
-    removeTab(sessionId) {
-      this.tabs = this.tabs.filter((tab) => tab.sessionId !== sessionId);
-      if (this.activeTab === sessionId) {
-        // Switch to the first tab if the active tab is removed
-        this.activeTab = this.tabs.length > 0 ? this.tabs[0].sessionId : '';
-      }
-    },
-    // Update agent status
-    updateStatus() {
-      this.socket.emit('update-status', { status: this.agentStatus });
-    },
-  },
-  components: {
-    ArrowUp,
   },
 };
 </script>
 
 <style scoped>
-.main-container {
+.agent-chat-wrapper {
   display: flex;
-  flex-direction: column;
   height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Top Section: Agent Information */
-.agent-info {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.agent-details {
-  margin-right: 20px;
-}
-
-.agent-name {
-  font-weight: bold;
-}
-
-.agent-id {
-  color: #666;
-}
-
-.agent-status {
-  width: 150px;
-}
-
-/* Bottom Section: Three Columns */
-.bottom-container {
-  display: flex;
-  flex: 1;
-  margin-top: 10px;
-}
-
-/* Left Column: Session Switcher */
-.session-switcher {
-  width: 15%;
-  border-right: 1px solid #ebeef5;
-  padding: 10px;
-}
-
-/* Middle Column: Chat Area */
-.chat-area {
-  width: 35%;
+/* Sidebar */
+.sidebar {
+  width: 10%;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
-  padding: 10px;
 }
 
-.chat-window {
-  flex: 1;
+.sidebar-header {
+  padding: 16px;
+  font-weight: bold;
+  font-size: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.conversation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   overflow-y: auto;
-  border: 1px solid #ebeef5;
-  padding: 10px;
-  margin-bottom: 10px;
+}
+
+.conversation-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.conversation-item:hover {
+  background-color: #f1f1f1;
+}
+
+/* Middle */
+.chat-main {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e0e0e0;
+}
+
+.chat-header {
+  padding: 16px 24px;
+  font-weight: 500;
+  background-color: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+
+.chat-messages {
+  padding: 24px;
+  height: 95%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .message {
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.message-content {
-  padding: 8px;
-  border-radius: 4px;
-  max-width: 70%;
-  word-wrap: break-word;
+  max-width: 60%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
   white-space: pre-wrap;
 }
 
-.message-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
+.message.customer {
+  background-color: #DCF8C6;
+  align-self: flex-start;
 }
 
-.agent .message-content {
-  background-color: #409eff;
-  color: white;
-  margin-left: auto;
+.message.agent {
+  background-color: #E8F0FE;
+  align-self: flex-end;
 }
 
-.customer .message-content {
-  background-color: #f0f0f0;
-  color: #333;
-  margin-right: auto;
+
+.message.robot {
+  background-color: #F3F3F3;
+  align-self: flex-end;
 }
 
-.input-area {
+.message.system {
+  background-color: #FFF4E5;
+  align-self: center;
+  font-size: 13px;
+}
+
+.chat-input {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  height: 5%;
+  padding: 12px 16px;
+  gap: 12px;
+  background-color: #fafafa;
 }
 
-.chat-input :deep(.el-textarea__inner) {
+.chat-input input {
+  width: 80%;
+  padding: 12px 16px;
   border-radius: 8px;
-  padding: 10px;
-  line-height: 1.5;
-  font-size: 14px;
-  resize: none;
-  overflow-y: auto;
-  padding-right: 60px;
+  border: 1px solid #ccc;
 }
 
-.send-button {
-  position: absolute;
-  right: 30px;
-  bottom: 30px;
-  height: 40px;
-  width: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+.chat-input button {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1a73e8;
+  color: white;
+  cursor: pointer;
 }
 
-/* Right Column: Complaint Area */
-.complaint-area {
+.chat-input button:hover {
+  background-color: #1967d2;
+}
+
+/* Ticket Panel */
+.ticket-panel {
   width: 50%;
-  padding: 10px;
-  border-left: 1px solid #ebeef5;
+  display: flex;
+  flex-direction: column;
+  background: #fcfcfc;
 }
 
-.complaint-list {
-  height: calc(100vh - 200px);
-  overflow-y: auto;
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 5px;
+  border-bottom: 1px solid #ddd;
+  background: #fafafa;
 }
 
-.complaint-item {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-}
-
-.complaint-content {
+.status-dropdown {
+  padding: 6px 10px;
   font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-.complaint-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
+.ticket-body {
+  width: 40%;
+  padding: 16px;
 }
 </style>

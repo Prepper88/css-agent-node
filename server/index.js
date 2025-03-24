@@ -38,6 +38,10 @@ io.on('connection', (socket) => {
     // update agent status
     await updateAgentStatus(agentId, 'available')
     console.log('update agent status, agentId:' + agentId + ' status: available')
+
+    // load sessions
+    await loadSessions(agentId)
+    console.log('load session complete')
   })
 
   // 消息转发
@@ -97,6 +101,31 @@ async function updateAgentStatus(agentId, status) {
         },
       })
   
+      // Find the socket for the agent
+      const socket = agents.get(agentId);
+      socket.emit('agent-status-updated', 'available')
+      return response
+    } catch (error) {
+      console.log('update agent status error: ' + error)
+    }
+  }
+
+  async function loadSessions(agentId) {
+    const data = {
+      agentId: agentId
+    }
+    const url = JAVA_END_URL_PREFIX + '/api/session/loadSessionForAgent?' + qs.stringify(data)
+  
+    try {
+      const response = await axios.post(url, data, {
+        headers: {
+          'Content-Type': 'application/json', // 设置请求头
+        },
+      })
+  
+      // Find the socket for the agent
+      const socket = agents.get(agentId);
+      socket.emit('session-loaded', response.data)
       return response
     } catch (error) {
       console.log('update agent status error: ' + error)
@@ -127,13 +156,13 @@ app.post('/api/push-message', (req, res) => {
 
   // HTTP API for notifying agents about new sessions
 app.post('/api/notify-new-session', (req, res) => {
-    const { agentId, sessionId, customerId, customerName } = req.body;
+    const { agentId, sessionId, customerId, customerName, status, messages } = req.body;
   
     // Find the socket for the agent
     const socket = agents.get(agentId);
     if (socket) {
       // Send new-session event to the agent
-      socket.emit('session-assigned', { sessionId, customerId, customerName });
+      socket.emit('new-session', { sessionId, customerId, customerName, status, messages });
       res.status(200).json({ success: true, message: 'New session notification sent to agent' });
     } else {
       res.status(404).json({ success: false, message: 'Agent not connected' });
