@@ -45,8 +45,8 @@ io.on('connection', (socket) => {
   })
 
   // 消息转发
-  socket.on('send-message', async ({ agentId, sessionId, message }) => {
-    await sendMessage(sessionId, message, agentId)
+  socket.on('send-message', async ({ senderId, sessionId, message }) => {
+    await sendMessage(sessionId, message, senderId)
   })
 
   // 断开连接
@@ -65,12 +65,12 @@ io.on('connection', (socket) => {
 })
 
 // send message
-async function sendMessage(sessionId, message, agentId) {
+async function sendMessage(sessionId, message, senderId) {
   const data = {
-    senderId: agentId,
+    senderId,
     senderType: 'agent',
-    sessionId: sessionId,
-    message: message,
+    sessionId,
+    message,
   }
   const url = JAVA_END_URL_PREFIX + '/api/message/send'
 
@@ -134,8 +134,8 @@ async function updateAgentStatus(agentId, status) {
 
 // HTTP API for pushing messages to agents
 app.post('/api/push-message', (req, res) => {
-    const { sessionId, sendId, sendName, agentId, message } = req.body;
-    console.log('push message, sendTo: ' + sendId + ' message:' + message)
+    const { sessionId, senderId, senderType, agentId, message } = req.body;
+    console.log('push message, sendTo: ' + senderId + ' message:' + message)
   
     // Find the socket for the agent
     const socket = agents.get(agentId);
@@ -143,8 +143,8 @@ app.post('/api/push-message', (req, res) => {
       // Send the message to the agent
       socket.emit('message', {
         sessionId,
-        sendId,
-        sendName,
+        senderId,
+        senderType,
         message,
         time: new Date().toLocaleTimeString(),
       });

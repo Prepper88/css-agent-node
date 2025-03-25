@@ -3,20 +3,25 @@
   <div class="agent-chat-wrapper">
     <!-- Left Sidebar: Conversations -->
     <div class="sidebar">
-      <!-- <div class="sidebar-header">Conversations</div> -->
       <ul class="conversation-list">
-        <li v-for="(item, index) in conversations" :key="index" @click="selectConversation(item)">
-          <div class="conversation-item">{{ item.summary }}</div>
+        <li v-for="(item, index) in conversations" :key="index" @click="selectConversation(item)" :class="['conversation-item', selectedConversation && selectedConversation.sessionId === item.sessionId ? 'selected' : '', item.isNew ? 'new-session' : '']">
+          <!-- <div>{{ item.summary }}</div> -->
+          <div class="conversation-avatar">
+            <img :src="item.avatar" alt="avatar" />
+          </div>
+          <div class="conversation-text">
+            <div class="conversation-header">
+              <span class="conversation-name">{{ item.customerName }}</span>
+              <span v-if="item.isNew" class="badge-new">NEW</span>
+            </div>
+            <div class="conversation-preview">abc</div>
+          </div>
         </li>
       </ul>
     </div>
 
     <!-- Middle Panel: Chat -->
     <div class="chat-main">
-      <!-- <div class="chat-header">
-        <span v-if="selectedConversation">Session with {{ selectedConversation.summary }}</span>
-        <span v-else>No session selected</span>
-      </div> -->
 
       <div class="chat-messages">
         <div
@@ -55,6 +60,7 @@
 
 <script>
 import { io } from 'socket.io-client'
+import { generateAvatar } from "@/utils/avatar"
 import axios from 'axios'
 
 export default {
@@ -80,7 +86,7 @@ export default {
   methods: {
     initializeAgent() {
       const currentAgent = JSON.parse(localStorage.getItem('agent'))
-      console.log('load agent: {}', currentAgent)
+      console.log('load agent: ', currentAgent)
       this.agent = currentAgent
     },
     initializeSocket() {
@@ -92,7 +98,7 @@ export default {
 
       // Listen for new sessions assigned to the agent
       this.socket.on('session-loaded', (sessions) => {
-        console.log('session loaded, session: ' + sessions);
+        console.log('session loaded, session: ', sessions);
         
         for (let session of sessions) {
           const { sessionId, customerId, customerName, status, messages } = session;
@@ -101,6 +107,8 @@ export default {
           this.conversations.push({
             sessionId,
             customerId,
+            avatar: generateAvatar(customerName),
+            customerName,
             summary: customerName,
             messages: messages,
             status: status
@@ -113,20 +121,22 @@ export default {
       });
 
       // Listen for new sessions assigned to the agent
-      this.socket.on('new-session', (data) => {
-        console.log('new session, sessionId: ' + data.sessionId);
+      this.socket.on('new-session', (session) => {
+        console.log('new session: ', session);
         
-        const { sessionId, customerId, customerName, status, messages } = data;
+        const { sessionId, customerId, customerName, status, messages } = session;
         // Add a new tab for the session
         this.conversations.push({
           sessionId,
           customerId,
+          avatar: generateAvatar(customerName),
           summary: customerName,
           messages: messages,
-          status: status
+          status: status,
+          isNew: true
         });
         // Set the new tab as active
-        if (this.selectedConversation === undefined) {
+        if (!this.selectedConversation) {
           this.selectedConversation = this.conversations[0]
         }
       });
@@ -138,15 +148,16 @@ export default {
 
       // Listen for incoming messages
       this.socket.on('message', (data) => {
-        const { sessionId, message, sendName } = data;
-        console.log('receive message: ' + message + ' sessionId: ' + sessionId + ' sendName:' + sendName)
+        const { sessionId, message, senderType } = data;
+        console.log('receive message: ' + message + ' sessionId: ' + sessionId + ' senderType:' + senderType)
 
         const conversation = this.conversations.find((conversation) => conversation.sessionId === sessionId);
         if (conversation) {
           // Add the message to the tab's chat
           conversation.messages.push({
-            content: message,
-            sendName,
+            sessionId,
+            senderType,
+            message,
             time: new Date().toLocaleTimeString(),
           });
           // Scroll to the bottom
@@ -167,15 +178,23 @@ export default {
     },
     selectConversation(item) {
       this.selectedConversation = item;
+      this.selectedConversation.isNew = false;
     },
     sendMessage() {
       if (!this.newMessage.trim() || !this.selectedConversation) return;
-      this.selectedConversation.messages.push({
+
+      const msg = {
+        sessionId: this.selectedConversation.sessionId,
+        senderId: this.agent.id,
         senderType: "agent",
         message: this.newMessage,
-      });
+      }
+      this.selectedConversation.messages.push(msg);
+
+      this.socket.emit('send-message', msg)
       this.newMessage = "";
     },
+    
     async updateStatus() {
       try {
         const response = await fetch("http://localhost:8080/api/agent/update-status", {
@@ -189,7 +208,7 @@ export default {
         if (!response.ok) throw new Error("Failed to update status");
         console.log("Status updated to", this.agent.status);
       } catch (err) {
-        alert("Failed to update agent status");
+        alert("Failed to update agent status:", err);
       }
     },
   },
@@ -234,7 +253,75 @@ export default {
 
 .conversation-item:hover {
   background-color: #f1f1f1;
+  border-radius: 0.5rem;
 }
+
+.conversation-item.selected {
+  /* background-color: #e3e3e3;
+  font-weight: bold;
+  border-radius: 0.5rem; */
+
+  background-color: #f3f4f6;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+/* 
+.conversation-item.new-session {
+  border-left: 4px solid #4f46e5;
+  background-color: #f0f8ff;
+} */
+
+.conversation-item.new-session {
+  position: relative;
+}
+
+.conversation-item.new-session::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #4f46e5;
+  border-radius: 50%;
+}
+
+
+.conversation-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.conversation-text {
+  flex: 1;
+  overflow: hidden;
+}
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.conversation-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.conversation-preview {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.badge-new {
+  background-color: #4f46e5;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
 
 /* Middle */
 .chat-main {
