@@ -169,6 +169,23 @@ app.post('/api/notify-new-session', (req, res) => {
     }
   });
 
+  app.get('/api/avatar/:name', async (req, res) => {
+    const { name } = req.params;
+    const avatarUrl = `https://api.multiavatar.com/${name}.svg`;
+  
+    try {
+      const response = await axios.get(avatarUrl, {
+        responseType: 'stream', // 保持 svg 流
+      });
+  
+      res.setHeader('Content-Type', 'image/svg+xml');
+      response.data.pipe(res); // 直接转发到前端
+    } catch (error) {
+      console.error('Error fetching avatar:', error.message);
+      res.status(500).send('Avatar fetch failed');
+    }
+  });
+
 // 启动服务器
 const PORT = 3001
 server.listen(PORT, () => {

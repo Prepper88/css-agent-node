@@ -1,54 +1,79 @@
 <template>
-    <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-100 rounded-lg cursor-pointer">
-      <!-- Left: Avatar -->
-      <div class="flex items-center space-x-3">
-        <img
-          :src="avatar"
-          alt="Avatar"
-          class="w-10 h-10 rounded-full object-cover"
-        />
-        <div>
-          <div class="font-semibold text-gray-900">{{ username }}</div>
-          <div class="text-sm text-gray-500 truncate max-w-[200px]">
-            {{ lastMessage }}
-          </div>
-        </div>
-      </div>
-  
-      <!-- Right: New badge -->
-      <div v-if="isNew" class="ml-2">
-        <span class="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-          new
-        </span>
-      </div>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name: "ChatItem",
-    props: {
-      username: String,
-      lastMessage: String,
-      isNew: Boolean,
+  <div class="chat-item">
+    <!-- 头像：使用 UI Avatars -->
+    <!-- <img :src="avatarUrl" class="avatar" /> -->
+    <div v-html="avatarSvg"  class="avatar"></div>
+
+    <!-- 用户名 -->
+    <div class="username">{{ username }}</div>
+
+    <!-- 新标记 -->
+    <div v-if="isNew" class="badge">new</div>
+  </div>
+</template>
+
+<script>
+import multiavatar from '@multiavatar/multiavatar';
+
+export default {
+  name: "ChatItem",
+  props: {
+    username: {
+      type: String,
+      required: true,
     },
-    data() {
-      return {
-        avatarList: [
-          "/avatars/1.png",
-          "/avatars/2.png",
-          "/avatars/3.png",
-          "/avatars/4.png",
-          "/avatars/5.png",
-        ],
-        avatar: "",
-      };
+    isNew: {
+      type: Boolean,
+      default: false,
     },
-    created() {
-      // 随机选择一个头像
-      const index = Math.floor(Math.random() * this.avatarList.length);
-      this.avatar = this.avatarList[index];
+  },
+  computed: {
+    avatarSvg() {
+      return multiavatar(this.username);
     },
-  };
-  </script>
-  
+  },
+};
+</script>
+
+<style scoped>
+.chat-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 4px 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chat-item:hover {
+  background-color: #f0f0f0;
+}
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+.username {
+  flex: 1;
+  font-weight: 500;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.badge {
+  background-color: #4caf50;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-left: 6px;
+}
+.icon {
+  margin-left: auto;
+  padding-left: 10px;
+}
+</style>
