@@ -3,7 +3,13 @@
     <!-- Left Sidebar: Conversations -->
     <div class="sidebar">
       <ul class="conversation-list">
-        <ChatItem v-for="(item, index) in conversations" :key="index" @click="selectConversation(item)" :username="item.customerName" :isNew="item.isNew"></ChatItem>
+        <ChatItem
+          v-for="(item, index) in conversations"
+          :key="index"
+          @click="selectConversation(item)"
+          :username="item.customerName"
+          :isNew="item.isNew"
+        ></ChatItem>
       </ul>
     </div>
 
@@ -19,10 +25,7 @@
         />
       </div>
 
-      <ChatInput
-        v-model="newMessage"
-        @send="sendMessage"
-      />
+      <ChatInput v-model="newMessage" @send="sendMessage" />
     </div>
 
     <!-- Right Panel: Ticket & Order -->
@@ -35,41 +38,39 @@
           <option value="offline">Offline</option>
         </select>
       </div>
-
-      <div class="ticket-body">
-        <!-- Reserved for ticket editing & order details -->
-        <p style="color:#888; text-align:center; margin-top: 32px;">Ticket panel under construction</p>
-      </div>
+      <TicketPannel></TicketPannel>
     </div>
   </div>
 </template>
 
 <script>
 import { io } from 'socket.io-client'
-import ChatItem from "@/components/ChatItem.vue"
-import ChatMessage from "@/components/ChatMessage.vue"
-import ChatInput from "@/components/ChatInput.vue";
+import ChatItem from '@/components/ChatItem.vue'
+import ChatMessage from '@/components/ChatMessage.vue'
+import ChatInput from '@/components/ChatInput.vue'
+import TicketPannel from '@/components/TicketPannel.vue'
 
 export default {
-  name: "AgentChat",
+  name: 'AgentChat',
   components: {
-  ChatItem,
-  ChatMessage,
-  ChatInput,
+    ChatItem,
+    ChatMessage,
+    ChatInput,
+    TicketPannel,
   },
   data() {
     return {
       agent: {},
-      newMessage: "",
+      newMessage: '',
       selectedConversation: null,
       conversations: [],
-    };
+    }
   },
   mounted() {
     this.initializeAgent()
     this.initializeSocket()
   },
-  
+
   methods: {
     initializeAgent() {
       const currentAgent = JSON.parse(localStorage.getItem('agent'))
@@ -78,17 +79,17 @@ export default {
     },
     initializeSocket() {
       // Connect to the Socket.IO server
-      this.socket = io('http://localhost:3001'); // Replace with your server URL
+      this.socket = io('http://localhost:3001') // Replace with your server URL
 
       // Send agent-inbound event with agentId
-      this.socket.emit('agent-inbound', this.agent.id );
+      this.socket.emit('agent-inbound', this.agent.id)
 
       // Listen for new sessions assigned to the agent
       this.socket.on('session-loaded', (sessions) => {
-        console.log('session loaded, session: ', sessions);
-        
+        console.log('session loaded, session: ', sessions)
+
         for (let session of sessions) {
-          const { sessionId, customerId, customerName, status, messages } = session;
+          const { sessionId, customerId, customerName, status, messages } = session
 
           // Add a new tab for the session
           this.conversations.push({
@@ -97,20 +98,20 @@ export default {
             customerName,
             summary: customerName,
             messages: messages,
-            status: status
-          });
+            status: status,
+          })
         }
         // Set the new tab as active
         if (!this.selectedConversation && this.conversations.length != 0) {
           this.selectedConversation = this.conversations[0]
         }
-      });
+      })
 
       // Listen for new sessions assigned to the agent
       this.socket.on('new-session', (session) => {
-        console.log('new session: ', session);
-        
-        const { sessionId, customerId, customerName, status, messages } = session;
+        console.log('new session: ', session)
+
+        const { sessionId, customerId, customerName, status, messages } = session
         // Add a new tab for the session
         this.conversations.push({
           sessionId,
@@ -119,25 +120,29 @@ export default {
           customerName,
           messages: messages,
           status: status,
-          isNew: true
-        });
+          isNew: true,
+        })
         // Set the new tab as active
         if (!this.selectedConversation) {
           this.selectedConversation = this.conversations[0]
         }
-      });
+      })
 
       //agent status updated
-      this.socket.on('agent-status-updated', (agentStatus)=>{
+      this.socket.on('agent-status-updated', (agentStatus) => {
         this.agent.status = agentStatus
       })
 
       // Listen for incoming messages
       this.socket.on('message', (data) => {
-        const { sessionId, message, senderType } = data;
-        console.log('receive message: ' + message + ' sessionId: ' + sessionId + ' senderType:' + senderType)
+        const { sessionId, message, senderType } = data
+        console.log(
+          'receive message: ' + message + ' sessionId: ' + sessionId + ' senderType:' + senderType,
+        )
 
-        const conversation = this.conversations.find((conversation) => conversation.sessionId === sessionId);
+        const conversation = this.conversations.find(
+          (conversation) => conversation.sessionId === sessionId,
+        )
         if (conversation) {
           // Add the message to the tab's chat
           conversation.messages.push({
@@ -145,77 +150,77 @@ export default {
             senderType,
             message,
             time: new Date().toLocaleTimeString(),
-          });
+          })
           // Scroll to the bottom
           this.$nextTick(() => {
-            const chatWindow = this.$el.querySelector('.chat-window');
-            if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
-          });
+            const chatWindow = this.$el.querySelector('.chat-window')
+            if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight
+          })
         }
-      });
+      })
 
       // Listen for incoming complaints
       this.socket.on('complaint', (data) => {
         this.complaints.push({
           content: data.content,
           time: new Date().toLocaleTimeString(),
-        });
-      });
+        })
+      })
     },
     selectConversation(item) {
-      this.selectedConversation = item;
-      this.selectedConversation.isNew = false;
+      this.selectedConversation = item
+      this.selectedConversation.isNew = false
     },
     sendMessage() {
-      if (!this.newMessage.trim() || !this.selectedConversation) return;
+      if (!this.newMessage.trim() || !this.selectedConversation) return
 
       const newMsg = {
         sessionId: this.selectedConversation.sessionId,
         senderId: this.agent.id,
-        senderType: "agent",
+        senderType: 'agent',
         message: this.newMessage,
       }
 
       if (this.selectedConversation) {
-        this.selectedConversation.messages.push(newMsg);
+        this.selectedConversation.messages.push(newMsg)
       }
 
       this.socket.emit('send-message', newMsg)
-      this.newMessage = "";
-      
+      this.newMessage = ''
+
       this.$nextTick(() => {
-        const container = this.$refs.messageContainer;
+        const container = this.$refs.messageContainer
         if (container) {
-          container.scrollTop = container.scrollHeight;
+          container.scrollTop = container.scrollHeight
         }
-      });
+      })
     },
-    
+
     async updateStatus() {
       try {
-        const response = await fetch("http://localhost:8080/api/agent/update-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('http://localhost:8080/api/agent/update-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             agentId: this.agent.id,
             status: this.agent.status,
           }),
-        });
-        if (!response.ok) throw new Error("Failed to update status");
-        console.log("Status updated to", this.agent.status);
+        })
+        if (!response.ok) throw new Error('Failed to update status')
+        console.log('Status updated to', this.agent.status)
       } catch (err) {
-        alert("Failed to update agent status:", err);
+        alert('Failed to update agent status:', err)
       }
     },
   },
-};
+}
 </script>
 
 <style scoped>
 .agent-chat-wrapper {
   display: flex;
   height: 100vh;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Sidebar */
@@ -282,6 +287,7 @@ export default {
 }
 
 .ticket-header {
+  height: 3%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -295,10 +301,5 @@ export default {
   font-size: 14px;
   border-radius: 6px;
   border: 1px solid #ccc;
-}
-
-.ticket-body {
-  width: 40%;
-  padding: 16px;
 }
 </style>
