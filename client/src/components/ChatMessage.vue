@@ -1,5 +1,8 @@
 <template>
-  <div v-if="messageType === 'text'" :class="['message', senderTypeClass]">
+  <div
+    v-if="messageType === 'text' || messageType === 'system-notice'"
+    :class="['message', senderTypeClass]"
+  >
     <!-- Avatar（靠左或靠右） -->
     <div
       v-if="showAvatar"
@@ -30,13 +33,13 @@ export default {
   },
   computed: {
     senderTypeClass() {
-      return this.senderType || 'system'
+      return this.messageType === 'system-notice' ? 'system' : this.senderType
     },
     isSelf() {
       return this.senderType === 'agent' || this.senderType === 'robot'
     },
     showAvatar() {
-      return this.senderType !== 'system' // 系统消息不显示头像
+      return this.messageType !== 'system-notice'
     },
     avatarSvg() {
       if (this.senderType === 'agent') {
