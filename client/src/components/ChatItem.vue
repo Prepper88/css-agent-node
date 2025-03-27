@@ -2,7 +2,7 @@
   <div class="chat-item">
     <!-- 头像：使用 UI Avatars -->
     <!-- <img :src="avatarUrl" class="avatar" /> -->
-    <div v-html="avatarSvg"  class="avatar"></div>
+    <div v-html="avatarSvg" class="avatar"></div>
 
     <!-- 用户名 -->
     <div class="username">{{ username }}</div>
@@ -13,10 +13,10 @@
 </template>
 
 <script>
-import multiavatar from '@multiavatar/multiavatar';
+import multiavatar from '@multiavatar/multiavatar'
 
 export default {
-  name: "ChatItem",
+  name: 'ChatItem',
   props: {
     username: {
       type: String,
@@ -29,10 +29,10 @@ export default {
   },
   computed: {
     avatarSvg() {
-      return multiavatar(this.username);
+      return multiavatar(this.username)
     },
   },
-};
+}
 </script>
 
 <style scoped>
@@ -57,8 +57,9 @@ export default {
   object-fit: cover;
 }
 .username {
+  font-family: Roboto Medium;
   flex: 1;
-  font-weight: 500;
+  font-weight: 800;
   color: #222;
   white-space: nowrap;
   overflow: hidden;

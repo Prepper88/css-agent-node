@@ -21,7 +21,8 @@
           :key="index"
           :senderType="msg.senderType"
           :senderName="msg.senderName || msg.senderType"
-          :message="msg.message"
+          :message-type="msg.messageType"
+          :content="msg.content"
         />
       </div>
 
@@ -135,9 +136,9 @@ export default {
 
       // Listen for incoming messages
       this.socket.on('message', (data) => {
-        const { sessionId, message, senderType } = data
+        const { sessionId, content, senderType } = data
         console.log(
-          'receive message: ' + message + ' sessionId: ' + sessionId + ' senderType:' + senderType,
+          'receive message: ' + content + ' sessionId: ' + sessionId + ' senderType:' + senderType,
         )
 
         const conversation = this.conversations.find(
@@ -148,13 +149,15 @@ export default {
           conversation.messages.push({
             sessionId,
             senderType,
-            message,
+            content,
             time: new Date().toLocaleTimeString(),
           })
           // Scroll to the bottom
           this.$nextTick(() => {
-            const chatWindow = this.$el.querySelector('.chat-window')
-            if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight
+            const container = this.$refs.messageContainer
+            if (container) {
+              container.scrollTop = container.scrollHeight
+            }
           })
         }
       })
@@ -178,7 +181,8 @@ export default {
         sessionId: this.selectedConversation.sessionId,
         senderId: this.agent.id,
         senderType: 'agent',
-        message: this.newMessage,
+        content: this.newMessage,
+        messageType: 'text',
       }
 
       if (this.selectedConversation) {
@@ -294,6 +298,11 @@ export default {
   padding: 5px 5px;
   border-bottom: 1px solid #ddd;
   background: #fafafa;
+}
+
+.ticket-header span {
+  font-family: Roboto Medium;
+  font-weight: 800;
 }
 
 .status-dropdown {
