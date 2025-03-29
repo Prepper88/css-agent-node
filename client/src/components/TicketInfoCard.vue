@@ -2,27 +2,26 @@
   <section class="card">
     <div class="card-header"><h3>Ticket Workflow</h3></div>
     <div class="card-body">
-      <TicketWorkflow :current-step="1"></TicketWorkflow>
+      <TicketWorkflow :current-step="0"></TicketWorkflow>
       <div class="section-container" @submit.prevent="submitForm">
         <div class="row-2">
           <div class="section-group">
             <label>Issue Type</label>
             <select class="input full">
-              <option disabled selected>Select country</option>
-              <option>United States</option>
-              <option>Canada</option>
-              <option>China</option>
-              <option>India</option>
+              <option disabled selected>Select Issue Type</option>
+              <option>General Inquiry</option>
+              <option>Service Request</option>
+              <option>After-sales Support</option>
             </select>
           </div>
           <div class="section-group">
             <label>Issue</label>
             <select class="input full">
-              <option disabled selected>Select country</option>
-              <option>United States</option>
-              <option>Canada</option>
-              <option>China</option>
-              <option>India</option>
+              <option disabled selected>Select Issue</option>
+              <option>Open Account</option>
+              <option>Repair for Home Broadband</option>
+              <option>Broadband Transfer to New Address</option>
+              <option>Cancel Broadband Plan</option>
             </select>
           </div>
         </div>

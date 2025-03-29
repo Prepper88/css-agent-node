@@ -12,7 +12,7 @@
       ></InfoCard>
 
       <!-- Install Info -->
-      <InfoCard :cardname="installInfoCard.cardname" :fields="installInfoCard.fields"></InfoCard>
+      <InfoCard :cardname="extraInfoCard.cardname" :fields="extraInfoCard.fields"></InfoCard>
 
       <!-- Ticket Info -->
       <TicketInfoCard></TicketInfoCard>
@@ -36,6 +36,11 @@ import TicketInfoCard from './TicketInfoCard.vue'
 
 export default {
   components: { InfoCard, TicketInfoCard },
+  props: {
+    customerInfoCard: Object,
+    orderInfoCard: Object,
+    extraInfoCard: Object,
+  },
   data() {
     return {
       issueType: '',
@@ -53,91 +58,6 @@ export default {
         'Resolved',
         'Feedback Received',
       ],
-      customerInfoCard: {
-        cardname: 'Customer Info',
-        fields: [
-          {
-            label: 'Name',
-            value: 'John Green',
-          },
-          {
-            label: 'Email',
-            value: 'John Doe@example.com',
-          },
-          {
-            label: 'Phone',
-            value: '+1 123-456-7890',
-          },
-          {
-            label: 'Tax Status',
-            value: 'Tax Exempt',
-          },
-        ],
-      },
-      orderInfoCard: {
-        cardname: 'Order Info',
-        tags: [
-          {
-            name: 'Pending Payment',
-            level: 'warning',
-          },
-          {
-            name: 'Not Installed',
-            level: 'error',
-          },
-        ],
-        fields: [
-          {
-            label: 'Order Id',
-            value: '#B123456789',
-          },
-          {
-            label: 'Order Name',
-            value: 'Distribute $50 500M Plan',
-          },
-          {
-            label: 'Business Type',
-            value: 'Broadband',
-          },
-          {
-            label: 'Order Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Payment Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Activation Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Payment Status',
-            value: 'paid',
-          },
-        ],
-      },
-      installInfoCard: {
-        cardname: 'Install Info',
-        fields: [
-          {
-            label: 'Technician Name',
-            value: 'Bill Jome',
-          },
-          {
-            label: 'Technician Phone',
-            value: '+1 888-555-9999',
-          },
-          {
-            label: 'Appointment Time',
-            value: '2025-03-26 11:30',
-          },
-          {
-            label: 'Completed At',
-            value: '---',
-          },
-        ],
-      },
     }
   },
   methods: {},
