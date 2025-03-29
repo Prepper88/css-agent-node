@@ -2,49 +2,70 @@
   <section class="card">
     <div class="card-header"><h3>Ticket Workflow</h3></div>
     <div class="card-body">
-      <TicketWorkflow :current-step="0"></TicketWorkflow>
+      <TicketWorkflow
+        ref="workflow"
+        :status-flow="statusFlow"
+        :current-status="internalTicket.status"
+      ></TicketWorkflow>
       <div class="section-container" @submit.prevent="submitForm">
         <div class="row-2">
           <div class="section-group">
             <label>Issue Type</label>
-            <select class="input full">
+            <select class="input full" v-model="internalTicket.issueType">
               <option disabled selected>Select Issue Type</option>
-              <option>General Inquiry</option>
-              <option>Service Request</option>
-              <option>After-sales Support</option>
+              <option v-for="(issueType, index) in issueTypes" :key="index">{{ issueType }}</option>
             </select>
           </div>
           <div class="section-group">
             <label>Issue</label>
-            <select class="input full">
+            <select class="input full" v-model="internalTicket.issue">
               <option disabled selected>Select Issue</option>
-              <option>Open Account</option>
-              <option>Repair for Home Broadband</option>
-              <option>Broadband Transfer to New Address</option>
-              <option>Cancel Broadband Plan</option>
+              <option v-for="(issue, index) in issues" :key="index">{{ issue }}</option>
             </select>
           </div>
         </div>
 
         <div class="section-group">
           <label>Remark</label>
-          <textarea type="text" rows="5" placeholder="e.g Irakli Beridze" class="textarea full" />
+          <textarea
+            type="text"
+            rows="5"
+            placeholder="Please describe customer's issue in detail"
+            v-model="internalTicket.remark"
+            class="textarea full"
+          />
         </div>
 
-        <button type="button" class="submit-button">Confirmed Issue With Client</button>
+        <button type="button" @click="clarifyIssue" class="submit-button">
+          Confirmed Issue With Client
+        </button>
       </div>
 
       <div class="section-container" @submit.prevent="submitForm">
         <div class="section-group">
-          <label>User Request</label>
-          <textarea type="text" rows="5" placeholder="e.g Irakli Beridze" class="textarea full" />
+          <label>Customer Request</label>
+          <textarea
+            type="text"
+            rows="5"
+            placeholder="Describe customer's request"
+            v-model="internalTicket.customerRequest"
+            class="textarea full"
+          />
         </div>
         <div class="section-group">
           <label>Confirmed Solution</label>
-          <textarea type="text" rows="5" placeholder="e.g Irakli Beridze" class="textarea full" />
+          <textarea
+            type="text"
+            rows="5"
+            v-model="internalTicket.confirmedSolution"
+            placeholder="Describe the solution which is confirmed with customer"
+            class="textarea full"
+          />
         </div>
 
-        <button type="button" class="submit-button">Confirm Solution With Client</button>
+        <button type="button" @click="confirmSolution" class="submit-button">
+          Confirm Solution With Client
+        </button>
       </div>
     </div>
   </section>
@@ -52,28 +73,61 @@
 
 <script>
 import TicketWorkflow from './TicketWorkflow.vue'
-import Test from './Test.vue'
+import axios from '@/api/axiosInstance.js'
 
 export default {
-  components: { TicketWorkflow, Test },
+  components: { TicketWorkflow },
+  props: {
+    ticket: Object,
+  },
+  inject: ['selectedConversation'],
   data() {
     return {
-      issueType: '',
-      issue: '',
-      description: '',
-      userRequest: '',
-      solution: '',
-      currentStep: 2,
+      internalTicket: this.ticket || { status: 'Created' },
+      issueTypes: ['General Inquiry', 'Service Request', 'After-sales Support'],
+      issues: [
+        'Open Account',
+        'Repair for Home Broadband',
+        'Broadband Transfer to New Address',
+        'Cancel Broadband Plan',
+      ],
       statusFlow: [
         'Created',
         'Issue Clarified',
         'Solution Confirmed',
-        'Executing',
-        'Completed',
+        'Executed',
         'Resolved',
-        'Feedback Received',
+        'Feedback Given',
       ],
     }
+  },
+  watch: {
+    'internalTicket.status'(newStatus) {
+      this.$refs.workflow.changeStatus(newStatus)
+    },
+  },
+  methods: {
+    clarifyIssue() {
+      this.internalTicket.status = 'Issue Clarified'
+      this.updateTicket()
+    },
+    confirmSolution() {
+      this.internalTicket.status = 'Solution Confirmed'
+      this.updateTicket()
+    },
+    async updateTicket() {
+      try {
+        this.internalTicket.sessionId = this.selectedConversation.sessionId
+        const response = await axios.post('/api/ticket/add-or-update', this.internalTicket, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        Object.assign(this.internalTicket, response.data)
+      } catch (error) {
+        console.log('fail to update ticket', error, this.internalTicket)
+      }
+    },
   },
 }
 </script>

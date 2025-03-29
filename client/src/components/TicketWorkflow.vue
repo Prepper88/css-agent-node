@@ -6,10 +6,10 @@
         v-for="(step, index) in statusFlow"
         :key="index"
         class="step-item"
-        :class="{ active: currentStep >= index }"
+        :class="{ active: currentIndex >= index }"
       >
         <div class="circle">
-          <span v-if="currentStep >= index">✔</span>
+          <span v-if="currentIndex >= index">✔</span>
         </div>
         <div class="label">{{ step }}</div>
       </div>
@@ -20,21 +20,22 @@
 <script>
 export default {
   props: {
-    currentStep: {
-      type: Number,
-      default: 0,
+    currentStatus: String,
+    statusFlow: Array,
+  },
+  computed: {
+    currentIndex() {
+      return this.statusFlow.indexOf(this.internalStatus)
+    },
+  },
+  methods: {
+    changeStatus(status) {
+      this.internalStatus = status
     },
   },
   data() {
     return {
-      statusFlow: [
-        'Created',
-        'Issue Clarified',
-        'Solution Confirmed',
-        'Executed',
-        'Resolved',
-        'Feedback Received',
-      ],
+      internalStatus: this.currentStatus,
     }
   },
 }

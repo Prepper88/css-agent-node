@@ -2,20 +2,20 @@
   <div class="page-vertical">
     <div class="scroll-container">
       <!-- Customer Info -->
-      <InfoCard :cardname="customerInfoCard.cardname" :fields="customerInfoCard.fields"></InfoCard>
+      <InfoCard :cardName="customerInfoCard.cardName" :fields="customerInfoCard.fields"></InfoCard>
 
       <!-- Order Info -->
       <InfoCard
-        :cardname="orderInfoCard.cardname"
+        :card-name="orderInfoCard.cardName"
         :fields="orderInfoCard.fields"
         :tags="orderInfoCard.tags"
       ></InfoCard>
 
       <!-- Install Info -->
-      <InfoCard :cardname="extraInfoCard.cardname" :fields="extraInfoCard.fields"></InfoCard>
+      <InfoCard :card-name="extraInfoCard.cardName" :fields="extraInfoCard.fields"></InfoCard>
 
       <!-- Ticket Info -->
-      <TicketInfoCard></TicketInfoCard>
+      <TicketInfoCard :ticket="ticket"></TicketInfoCard>
     </div>
 
     <!-- Bottom Actions -->
@@ -40,25 +40,10 @@ export default {
     customerInfoCard: Object,
     orderInfoCard: Object,
     extraInfoCard: Object,
+    ticket: Object,
   },
   data() {
-    return {
-      issueType: '',
-      issue: '',
-      description: '',
-      userRequest: '',
-      solution: '',
-      currentStep: 2,
-      statusFlow: [
-        'Created',
-        'Issue Clarified',
-        'Solution Confirmed',
-        'Executing',
-        'Completed',
-        'Resolved',
-        'Feedback Received',
-      ],
-    }
+    return {}
   },
   methods: {},
 }

@@ -6,7 +6,7 @@
         <ChatItem
           v-for="(item, index) in conversations"
           :key="index"
-          @click="selectConversation(item)"
+          @click="selectConversation(index)"
           :username="item.customerName"
           :isNew="item.isNew"
         ></ChatItem>
@@ -44,6 +44,7 @@
         :customer-info-card="customerInfoCard"
         :order-info-card="orderInfoCard"
         :extra-info-card="extraInfoCard"
+        :ticket="ticket"
       ></TicketPannel>
     </div>
   </div>
@@ -55,6 +56,8 @@ import ChatItem from '@/components/ChatItem.vue'
 import ChatMessage from '@/components/ChatMessage.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import TicketPannel from '@/components/TicketPannel.vue'
+import axios from '@/api/axiosInstance.js'
+import { computed } from 'vue'
 
 export default {
   name: 'AgentChat',
@@ -63,6 +66,11 @@ export default {
     ChatMessage,
     ChatInput,
     TicketPannel,
+  },
+  provide() {
+    return {
+      selectedConversation: computed(() => this.selectedConversation),
+    }
   },
   data() {
     return {
@@ -73,6 +81,7 @@ export default {
       customerInfoCard: null,
       orderInfoCard: null,
       extraInfoCard: null,
+      ticket: null,
     }
   },
   mounted() {
@@ -112,7 +121,7 @@ export default {
         }
         // Set the new tab as active
         if (!this.selectedConversation && this.conversations.length != 0) {
-          this.selectedConversation = this.conversations[0]
+          this.selectConversation(0)
         }
       })
 
@@ -133,7 +142,7 @@ export default {
         })
         // Set the new tab as active
         if (!this.selectedConversation) {
-          this.selectedConversation = this.conversations[0]
+          this.selectConversation(0)
         }
       })
 
@@ -179,94 +188,21 @@ export default {
         })
       })
     },
-    selectConversation(item) {
-      this.selectedConversation = item
+    async selectConversation(selectedIndex) {
+      this.selectedConversation = this.conversations[selectedIndex]
       this.selectedConversation.isNew = false
-
-      this.customerInfoCard = {
-        cardname: 'Customer Info',
-        fields: [
-          {
-            label: 'Name',
-            value: 'John Green',
+      try {
+        const response = await axios.get('/api/ticket/page', {
+          params: {
+            sessionId: this.selectedConversation.sessionId,
           },
-          {
-            label: 'Email',
-            value: 'John Doe@example.com',
-          },
-          {
-            label: 'Phone',
-            value: '+1 123-456-7890',
-          },
-          {
-            label: 'Tax Status',
-            value: 'Tax Exempt',
-          },
-        ],
-      }
-      this.orderInfoCard = {
-        cardname: 'Order Info',
-        tags: [
-          {
-            name: 'Pending Payment',
-            level: 'warning',
-          },
-          {
-            name: 'Not Installed',
-            level: 'error',
-          },
-        ],
-        fields: [
-          {
-            label: 'Order Id',
-            value: '#B123456789',
-          },
-          {
-            label: 'Order Name',
-            value: 'Distribute $50 500M Plan',
-          },
-          {
-            label: 'Business Type',
-            value: 'Broadband',
-          },
-          {
-            label: 'Order Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Payment Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Activation Time',
-            value: '2025-03-25 14:20',
-          },
-          {
-            label: 'Payment Status',
-            value: 'paid',
-          },
-        ],
-      }
-      this.extraInfoCard = {
-        cardname: 'Installation Info',
-        fields: [
-          {
-            label: 'Technician Name',
-            value: 'Bill Jome',
-          },
-          {
-            label: 'Technician Phone',
-            value: '+1 888-555-9999',
-          },
-          {
-            label: 'Appointment Time',
-            value: '2025-03-26 11:30',
-          },
-          {
-            label: 'Completed At',
-            value: '---',
-          },
-        ],
+        })
+        this.customerInfoCard = response.data.customerInfoCard
+        this.orderInfoCard = response.data.orderInfoCard
+        this.extraInfoCard = response.data.extraInfoCard
+        this.ticket = response.data.ticket
+      } catch (error) {
+        this.error = error.message || 'request failed'
       }
     },
     sendMessage() {
