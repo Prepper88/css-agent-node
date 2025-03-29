@@ -115,6 +115,18 @@ export default {
       this.internalTicket.status = 'Solution Confirmed'
       this.updateTicket()
     },
+    executed() {
+      this.internalTicket.status = 'Executed'
+      this.updateTicket()
+    },
+    resolved() {
+      this.internalTicket.status = 'Resolved'
+      this.updateTicket()
+    },
+    feedbackGiven() {
+      this.internalTicket.status = 'Feedback Given'
+      this.updateTicket()
+    },
     async updateTicket() {
       try {
         this.internalTicket.sessionId = this.selectedConversation.sessionId

@@ -15,27 +15,30 @@
       <InfoCard :card-name="extraInfoCard.cardName" :fields="extraInfoCard.fields"></InfoCard>
 
       <!-- Ticket Info -->
-      <TicketInfoCard :ticket="ticket"></TicketInfoCard>
+      <TicketInfoCard :ticket="ticket" ref="ticketInfoComponent"></TicketInfoCard>
     </div>
+
+    <ActionDialog ref="actionDialog" :showAssignTechnician="showAssignTechnician"></ActionDialog>
 
     <!-- Bottom Actions -->
     <div class="actions-bar">
       <button>Re-select Order</button>
-      <button>Assign Technician</button>
-      <button>Remind Technician</button>
-      <button>Delay Billing</button>
-      <button>Refund</button>
-      <button>Confirm Resolved</button>
+      <button @click="$refs.actionDialog.showAssignTechnicianForm">Assign Technician</button>
+      <button @click="$refs.actionDialog.showRemindTechnicianForm">Remind Technician</button>
+      <button @click="$refs.actionDialog.showDelayBillingForm">Delay Billing</button>
+      <button @click="$refs.actionDialog.showRefundForm">Refund</button>
+      <button @click="$refs.ticketInfoComponent.resolved()">Confirm Resolved</button>
     </div>
   </div>
 </template>
 
 <script>
+import ActionDialog from './ActionDialog.vue'
 import InfoCard from './InfoCard.vue'
 import TicketInfoCard from './TicketInfoCard.vue'
 
 export default {
-  components: { InfoCard, TicketInfoCard },
+  components: { InfoCard, TicketInfoCard, ActionDialog },
   props: {
     customerInfoCard: Object,
     orderInfoCard: Object,
@@ -43,7 +46,9 @@ export default {
     ticket: Object,
   },
   data() {
-    return {}
+    return {
+      showAssignTechnician: false,
+    }
   },
   methods: {},
 }

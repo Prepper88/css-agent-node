@@ -46,6 +46,7 @@ export default {
   position: relative;
   margin: 20px 0;
   padding-top: 24px;
+  z-index: 0;
 }
 .progress-line {
   position: absolute;
