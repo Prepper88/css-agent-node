@@ -27,7 +27,7 @@
       <button @click="$refs.actionDialog.showRemindTechnicianForm">Remind Technician</button>
       <button @click="$refs.actionDialog.showDelayBillingForm">Delay Billing</button>
       <button @click="$refs.actionDialog.showRefundForm">Refund</button>
-      <button @click="$refs.ticketInfoComponent.resolved()">Confirm Resolved</button>
+      <button @click="resolved">Confirm Resolved</button>
     </div>
   </div>
 </template>
@@ -36,7 +36,9 @@
 import ActionDialog from './ActionDialog.vue'
 import InfoCard from './InfoCard.vue'
 import TicketInfoCard from './TicketInfoCard.vue'
+import axios from 'axios'
 
+const JAVA_END_URL_PREFIX = 'http://localhost:8080'
 export default {
   components: { InfoCard, TicketInfoCard, ActionDialog },
   props: {
@@ -50,7 +52,20 @@ export default {
       showAssignTechnician: false,
     }
   },
-  methods: {},
+  inject: ['selectedConversation'],
+  methods: {
+    resolved() {
+      this.$refs.ticketInfoComponent.resolved()
+      this.sendServiceProgressCard(this.selectedConversation.sessionId)
+    },
+    sendServiceProgressCard(sessionId) {
+      axios.get(JAVA_END_URL_PREFIX + '/api/message/send-service-progress-card', {
+        params: {
+          sessionId,
+        },
+      })
+    },
+  },
 }
 </script>
 

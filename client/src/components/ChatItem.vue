@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-item">
+  <div class="chat-item" @mouseenter="hover = true" @mouseleave="hover = false">
     <!-- 头像：使用 UI Avatars -->
     <!-- <img :src="avatarUrl" class="avatar" /> -->
     <div v-html="avatarSvg" class="avatar"></div>
@@ -9,11 +9,15 @@
 
     <!-- 新标记 -->
     <div v-if="isNew" class="badge">new</div>
+
+    <!-- 关闭按钮 -->
+    <span class="close-btn" v-if="hover" @click.stop="closeSession">✖</span>
   </div>
 </template>
 
 <script>
 import multiavatar from '@multiavatar/multiavatar'
+import axios from '@/api/axiosInstance.js'
 
 export default {
   name: 'ChatItem',
@@ -26,10 +30,28 @@ export default {
       type: Boolean,
       default: false,
     },
+    conversation: Object,
+  },
+  data() {
+    return {
+      hover: false,
+    }
   },
   computed: {
     avatarSvg() {
       return multiavatar(this.username)
+    },
+  },
+  methods: {
+    async closeSession() {
+      axios.post('/api/session/end', null, {
+        params: {
+          sessionId: this.conversation.sessionId,
+          endedBy: 'agent',
+          endedById: this.$parent.agent.id,
+        },
+      })
+      this.$parent.closeConversation(this.conversation.sessionId)
     },
   },
 }
@@ -76,5 +98,17 @@ export default {
 .icon {
   margin-left: auto;
   padding-left: 10px;
+}
+.close-btn {
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.close-btn:hover {
+  background-color: #ddd;
+  color: #000;
 }
 </style>

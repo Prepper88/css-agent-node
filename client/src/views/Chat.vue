@@ -8,6 +8,7 @@
           :key="index"
           @click="selectConversation(index)"
           :username="item.customerName"
+          :conversation="item"
           :isNew="item.isNew"
         ></ChatItem>
       </ul>
@@ -246,6 +247,12 @@ export default {
       } catch (err) {
         alert('Failed to update agent status:', err)
       }
+    },
+    closeConversation(sessionId) {
+      const index = this.conversations.findIndex(
+        (conversation) => conversation.sessionId === sessionId,
+      )
+      this.conversations.splice(index, 1)
     },
   },
 }

@@ -166,7 +166,7 @@ app.post('/api/notify-new-session', (req, res) => {
 
   app.get('/api/avatar/:name', async (req, res) => {
     const { name } = req.params;
-    const avatarUrl = `https://api.multiavatar.com/${name}.svg`;
+    const avatarUrl = `https://api.multiavatar.com/${name}.svg`
   
     try {
       const response = await axios.get(avatarUrl, {
