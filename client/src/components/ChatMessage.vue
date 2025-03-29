@@ -14,17 +14,54 @@
     <!-- 内容气泡 -->
     <span class="message-content">{{ content }}</span>
   </div>
-  <div v-if="messageType === 'order-list'" class="order-list"></div>
+
+  <div v-if="messageType === 'order-list'">
+    <div :class="['message', senderTypeClass]" style="justify-content: flex-end">
+      <div
+        v-if="showAvatar"
+        class="message-avatar"
+        :class="{ right: isSelf }"
+        v-html="avatarSvg"
+      ></div>
+      <span class="message-content">{{ orderListMessageBody.messageTitle }}</span>
+    </div>
+    <OrderList :orders="orderListMessageBody.orderCards"></OrderList>
+  </div>
+
+  <div v-if="messageType === 'order-card'">
+    <div :class="['message', senderTypeClass]" style="justify-content: flex-start">
+      <div
+        v-if="showAvatar"
+        class="message-avatar"
+        :class="{ right: isSelf }"
+        v-html="avatarSvg"
+      ></div>
+      <span class="message-content">This is the order I'd like to consult about:</span>
+    </div>
+    <OrderCard
+      :id="orderCard.id"
+      :order-id="orderCard.orderId"
+      :order-title="orderCard.orderTitle"
+      :price="orderCard.price"
+      :pay-status="orderCard.payStatus"
+      :delivery-status="orderCard.deliveryStatus"
+      :created-at="orderCard.createdAt"
+      :image-name="orderCard.imageName"
+      :selected="true"
+    ></OrderCard>
+  </div>
 </template>
 
 <script>
 import multiavatar from '@multiavatar/multiavatar'
 import avatarRobot from '@/assets/robot.svg?raw'
 import avatarAgent from '@/assets/agent.svg?raw'
+import OrderList from './OrderList.vue'
+import OrderCard from './OrderCard.vue'
 
 export default {
   name: 'ChatMessage',
-  compoments: [multiavatar],
+  components: { OrderList, OrderCard },
   props: {
     senderType: String,
     content: String,
@@ -32,6 +69,20 @@ export default {
     messageType: String,
   },
   computed: {
+    orderListMessageBody() {
+      if (this.messageType === 'order-list' && this.content) {
+        return JSON.parse(this.content)
+      } else {
+        return {}
+      }
+    },
+    orderCard() {
+      if (this.messageType === 'order-card' && this.content) {
+        return JSON.parse(this.content)
+      } else {
+        return {}
+      }
+    },
     senderTypeClass() {
       return this.messageType === 'system-notice' ? 'system' : this.senderType
     },

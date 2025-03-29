@@ -136,7 +136,7 @@ export default {
 
       // Listen for incoming messages
       this.socket.on('message', (data) => {
-        const { sessionId, content, senderType } = data
+        const { sessionId, content, senderType, messageType } = data
         console.log(
           'receive message: ' + content + ' sessionId: ' + sessionId + ' senderType:' + senderType,
         )
@@ -149,6 +149,7 @@ export default {
           conversation.messages.push({
             sessionId,
             senderType,
+            messageType,
             content,
             time: new Date().toLocaleTimeString(),
           })
