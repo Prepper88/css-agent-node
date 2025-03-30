@@ -253,6 +253,13 @@ export default {
         (conversation) => conversation.sessionId === sessionId,
       )
       this.conversations.splice(index, 1)
+      if (this.selectedConversation.sessionId === sessionId) {
+        if (this.conversations.length > 0) {
+          this.selectedConversation = this.conversations[0]
+        } else {
+          this.selectedConversation = null
+        }
+      }
     },
   },
 }

@@ -101,6 +101,8 @@
 </template>
 
 <script>
+import axios from '@/api/axiosInstance.js'
+
 export default {
   name: 'ActionDialog',
   data() {
@@ -115,6 +117,7 @@ export default {
       phone: '',
     }
   },
+  inject: ['selectedConversation'],
   methods: {
     showAssignTechnicianForm() {
       this.showAssignTechnician = true
@@ -131,18 +134,29 @@ export default {
     assignTechnician() {
       this.showAssignTechnician = false
       this.$parent.$refs.ticketInfoComponent.executed()
+      this.sendServiceProgressCard()
     },
     remindTechnician() {
       this.showRemindTechnician = false
       this.$parent.$refs.ticketInfoComponent.executed()
+      this.sendServiceProgressCard()
     },
     delayBilling() {
       this.showDelayBilling = false
       this.$parent.$refs.ticketInfoComponent.executed()
+      this.sendServiceProgressCard()
     },
     refund() {
       this.showRefund = false
       this.$parent.$refs.ticketInfoComponent.executed()
+      this.sendServiceProgressCard()
+    },
+    sendServiceProgressCard() {
+      axios.get('/api/message/send-service-progress-card', {
+        params: {
+          sessionId: this.selectedConversation.sessionId,
+        },
+      })
     },
   },
 }
