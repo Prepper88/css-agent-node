@@ -234,15 +234,12 @@ export default {
 
     async updateStatus() {
       try {
-        const response = await fetch('http://localhost:8080/api/agent/update-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        axios.post('/api/agent/update-status', null, {
+          params: {
             agentId: this.agent.id,
             status: this.agent.status,
-          }),
+          },
         })
-        if (!response.ok) throw new Error('Failed to update status')
         console.log('Status updated to', this.agent.status)
       } catch (err) {
         alert('Failed to update agent status:', err)
