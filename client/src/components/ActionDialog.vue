@@ -134,22 +134,34 @@ export default {
     assignTechnician() {
       this.showAssignTechnician = false
       this.$parent.$refs.ticketInfoComponent.executed()
-      this.sendServiceProgressCard()
+
+      setTimeout(() => {
+        this.sendServiceProgressCard()
+      }, 500)
     },
     remindTechnician() {
       this.showRemindTechnician = false
       this.$parent.$refs.ticketInfoComponent.executed()
-      this.sendServiceProgressCard()
+
+      setTimeout(() => {
+        this.sendServiceProgressCard()
+      }, 500)
     },
     delayBilling() {
       this.showDelayBilling = false
       this.$parent.$refs.ticketInfoComponent.executed()
-      this.sendServiceProgressCard()
+
+      setTimeout(() => {
+        this.sendServiceProgressCard()
+      }, 500)
     },
     refund() {
       this.showRefund = false
       this.$parent.$refs.ticketInfoComponent.executed()
-      this.sendServiceProgressCard()
+
+      setTimeout(() => {
+        this.sendServiceProgressCard()
+      }, 500)
     },
     sendServiceProgressCard() {
       axios.get('/api/message/send-service-progress-card', {

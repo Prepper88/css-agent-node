@@ -56,7 +56,10 @@ export default {
   methods: {
     resolved() {
       this.$refs.ticketInfoComponent.resolved()
-      this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      //this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      setTimeout(() => {
+        this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      }, 500)
     },
     sendServiceProgressCard(sessionId) {
       axios.get(JAVA_END_URL_PREFIX + '/api/message/send-service-progress-card', {

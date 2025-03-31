@@ -110,12 +110,16 @@ export default {
     clarifyIssue() {
       this.internalTicket.status = 'Issue Clarified'
       this.updateTicket()
-      this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      setTimeout(() => {
+        this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      }, 500)
     },
     confirmSolution() {
       this.internalTicket.status = 'Solution Confirmed'
       this.updateTicket()
-      this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      setTimeout(() => {
+        this.sendServiceProgressCard(this.selectedConversation.sessionId)
+      }, 500)
     },
     executed() {
       this.internalTicket.status = 'Executed'
