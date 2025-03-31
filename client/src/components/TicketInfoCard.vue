@@ -110,10 +110,12 @@ export default {
     clarifyIssue() {
       this.internalTicket.status = 'Issue Clarified'
       this.updateTicket()
+      this.sendServiceProgressCard(this.selectedConversation.sessionId)
     },
     confirmSolution() {
       this.internalTicket.status = 'Solution Confirmed'
       this.updateTicket()
+      this.sendServiceProgressCard(this.selectedConversation.sessionId)
     },
     executed() {
       this.internalTicket.status = 'Executed'
@@ -139,6 +141,13 @@ export default {
       } catch (error) {
         console.log('fail to update ticket', error, this.internalTicket)
       }
+    },
+    sendServiceProgressCard(sessionId) {
+      axios.get('/api/message/send-service-progress-card', {
+        params: {
+          sessionId,
+        },
+      })
     },
   },
 }
